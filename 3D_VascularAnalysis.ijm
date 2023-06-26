@@ -64,6 +64,7 @@ for (i = 0; i < list.length; i++) {
 		run("Gaussian Blur...", "sigma=8");
 		run("Median...", "radius=5 stack");
 		waitForUser("Manually threshold di image");
+		run("Fill Holes", "stack");
 		run("Analyze Particles...", "size=1000-Infinity show=Nothing display clear stack");
 		selectWindow("Results");
 		
