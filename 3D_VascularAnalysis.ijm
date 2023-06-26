@@ -3,16 +3,17 @@
 Author: Chiara Sgattoni 2023
 Contact: chiara.sgattoni@uv.es */
 
+run("Close All");
 setOption("BlackBackground", false);
 run("Set Measurements...", "area mean integrated display redirect=None decimal=2");
 path = getDirectory("Choose a folder with images");
 list = getFileList(path);
 //Create a table with all the results
 Table.create("Vascular analysis");
-//Open .oif images
+//Open tif images
 for (i = 0; i < list.length; i++) {
-	if (endsWith(list[i], ".oif")) {
-		run("Bio-Formats Importer", "open=[" + path + File.separator+ list[i]+"] autoscale color_mode=Grayscale rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
+	if (endsWith(list[i], ".tif")) {
+		open(path + File.separator+ list[i]);
 		title = getTitle();
 		run("Split Channels");
 		selectWindow("C1-"+ title);
@@ -55,8 +56,8 @@ for (i = 0; i < list.length; i++) {
 		}
 		MeanAv = (totalM / M.length);
 		selectWindow("Vascular analysis");
-		Table.set("Image", i, title);
-		Table.set("Total vascular volume", i, totalA);
+		Table.set("Image name", i, title);
+		Table.set("Total vascular volume(um3)", i, totalA);
 					
 		//Measure area SEZ considered
 		run("Clear Results");
@@ -91,14 +92,43 @@ for (i = 0; i < list.length; i++) {
 			if (v > 3) {
 			totalV=totalV + V[v];
 			}
-		selectWindow("Vascular analysis");
-		Table.set("Total length", i, totalV);
-		Table.set("Volume zona", i, totalAlv);
-		Table.update;
-		close("*");
 		}
-	}	
-}			
+		selectWindow("Vascular analysis");
+		Table.set("Total vascular length(um)", i, totalV);
+		Table.set("Volume SEZ(um3)", i, totalAlv);
+		Table.update;
+		//Diameter analysis
+		selectWindow("Ly6c");
+		run("Set Measurements...", "area mean standard centroid redirect=None decimal=3");
+		run("Z Project...", "projection=[Max Intensity]");
+		run("Median...", "radius=5");
+		setAutoThreshold("Triangle dark");
+		waitForUser("Check that the threshold is fine");
+		run("Convert to Mask");
+		run("Fill Holes");
+		run("Analyze Particles...", "size=5-Infinity add");
+		rename("mask_1");
+		roiManager("Show None");
+		run("Duplicate...", "title=mask_2");
+		run("Skeletonize (2D/3D)");
+		rename("skel");
+		run("Geodesic Distance Map", "marker=skel mask=mask_1 distances=[Chessknight (5,7,11)] output=[32 bits] normalize");
+		roiManager("Show All");
+		roiManager("multi-measure measure_all append");
+		selectWindow("Results");
+		D = Table.getColumn("StdDev");
+		totalD = 0;
+		for (d = 0;d < D.length; d++){
+			totalD=totalD + D[d];
+			}
+		MeanDv = (totalD / D.length);
+		selectWindow("Vascular analysis");
+		Table.set("Mean diameter(um)", i, MeanDv); 
+		Table.update;
+		roiManager("reset");
+		close("*");
+	}
+}		
 //Save the table
 selectWindow("Vascular analysis");
 saveAs("results", path + File.separator+ "Vascular analysis.csv");
