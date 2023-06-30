@@ -1,5 +1,5 @@
 # Vascular-analysis_SEZ
-Quantification of the 3D brain vasculature in the mouse sub-ependymal zone 
+Quantification of the 3D brain vasculature in the mouse sub-ependymal zone (Branch length, Vascular volume and density, Mean diameter)
 
 Author: Chiara Sgattoni 2023  
 Universidad de Valencia
